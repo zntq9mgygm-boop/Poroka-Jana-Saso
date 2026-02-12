@@ -12,111 +12,119 @@ button { padding:10px 15px; border:none; border-radius:10px; background:black; c
 input, select { width:100%; padding:8px; margin:5px 0 10px 0; border-radius:8px; border:1px solid #ccc; }
 .hidden { display:none; }
 .menu-select { margin-bottom:10px; }
+.note { font-style: italic; color: #555; margin-bottom: 15px; }
 </style>
 </head>
 <body>
 <div class="card">
 
+<!-- STEP 1: Potrditev udeležbe -->
 <div id="step1">
 <h1>Potrditev udeležbe</h1>
 <label>Ime in priimek</label>
-<input type="text" id="name">
+<input type="text" id="name" placeholder="Vpišite svoje ime">
 <button onclick="attend(true)">Se udeležim</button>
 <button onclick="attend(false)" style="background:#777;margin-top:10px">Ne pridem</button>
 </div>
 
+<!-- STEP 2: Koliko pride -->
 <div id="step2" class="hidden">
 <h2>Koliko oseb pride?</h2>
 <label>Odrasli</label>
 <input type="number" id="adults" min="1" value="1">
 <label>Otroci</label>
 <input type="number" id="children" min="0" value="0">
+<p class="note">Otroci bodo imeli svoj meni.</p>
 <button onclick="goToMenus()">Nadaljuj</button>
 </div>
 
+<!-- STEP 3: Izbira menijev -->
 <div id="step3" class="hidden">
 <h2>Izberi meni za odrasle</h2>
 <div id="menuOptions"></div>
 <button onclick="submitForm()">Potrdi</button>
 </div>
 
+<!-- STEP 4: Hvala -->
 <div id="step4" class="hidden">
 <h2>Hvala za odgovor ❤️</h2>
 <p id="finalMessage"></p>
-</div>
-
 </div>
 
 <script>
 let attendance=false;
 
 function attend(value){
-attendance=value;
-if(!document.getElementById('name').value){alert('Vpišite ime'); return;}
-if(value){
-document.getElementById('step1').classList.add('hidden');
-document.getElementById('step2').classList.remove('hidden');
-} else {
-document.getElementById('step1').classList.add('hidden');
-document.getElementById('step4').classList.remove('hidden');
-document.getElementById('finalMessage').innerText='Žal nama je, da vas ne bo.';
-sendData();
-}
+  attendance=value;
+  if(!document.getElementById('name').value){alert('Vpišite ime'); return;}
+  if(value){
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+  } else {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step4').classList.remove('hidden');
+    document.getElementById('finalMessage').innerText='Žal nama je, da vas ne bo.';
+    sendData({name: document.getElementById('name').value, attendance: false});
+  }
 }
 
 function goToMenus(){
-let adults=parseInt(document.getElementById('adults').value);
-if(adults<1){alert('Vsaj 1 odrasla oseba'); return;}
-let container=document.getElementById('menuOptions');
-container.innerHTML='';
-for(let i=1;i<=adults;i++){
-let select=document.createElement('select');
-select.className='menu-select';
-select.id='adultMenu'+i;
-let optionDefault=document.createElement('option');
-optionDefault.value='';
-optionDefault.innerText='Izberi meni za odraslega '+i;
-optionDefault.disabled=true;
-optionDefault.selected=true;
-select.appendChild(optionDefault);
-['Mesni','Ribji','Vegetarijanski'].forEach(menu=>{
-let opt=document.createElement('option');
-opt.value=menu;
-opt.innerText=menu;
-select.appendChild(opt);
-});
-container.appendChild(select);
-}
-document.getElementById('step2').classList.add('hidden');
-document.getElementById('step3').classList.remove('hidden');
+  let adults=parseInt(document.getElementById('adults').value);
+  if(adults<1){alert('Vsaj 1 odrasla oseba'); return;}
+  
+  let container=document.getElementById('menuOptions');
+  container.innerHTML='';
+  for(let i=1;i<=adults;i++){
+    let select=document.createElement('select');
+    select.className='menu-select';
+    select.id='adultMenu'+i;
+    
+    let optionDefault=document.createElement('option');
+    optionDefault.value='';
+    optionDefault.innerText='Izberi meni za odraslega '+i;
+    optionDefault.disabled=true;
+    optionDefault.selected=true;
+    select.appendChild(optionDefault);
+    
+    ['Mesni','Ribji','Vegetarijanski'].forEach(menu=>{
+      let opt=document.createElement('option');
+      opt.value=menu;
+      opt.innerText=menu;
+      select.appendChild(opt);
+    });
+    container.appendChild(select);
+  }
+  
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
 }
 
 function submitForm(){
-let adults=parseInt(document.getElementById('adults').value);
-let menus=[];
-for(let i=1;i<=adults;i++){
-let val=document.getElementById('adultMenu'+i).value;
-if(!val){alert('Izberi meni za vsakega odraslega'); return;}
-menus.push(val);
-}
-let children=parseInt(document.getElementById('children').value);
+  let adults=parseInt(document.getElementById('adults').value);
+  let menus=[];
+  for(let i=1;i<=adults;i++){
+    let val=document.getElementById('adultMenu'+i).value;
+    if(!val){alert('Izberi meni za vsakega odraslega'); return;}
+    menus.push(val);
+  }
+  let children=parseInt(document.getElementById('children').value);
 
-document.getElementById('step3').classList.add('hidden');
-document.getElementById('step4').classList.remove('hidden');
-document.getElementById('finalMessage').innerText='Veseliva se vaše udeležbe.';
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step4').classList.remove('hidden');
+  document.getElementById('finalMessage').innerText='Veseliva se vaše udeležbe.';
 
-sendData({
-name:document.getElementById('name').value,
-attendance:attendance,
-adults:adults,
-children:children,
-menus:menus
-});
+  sendData({
+    name:document.getElementById('name').value,
+    attendance:attendance,
+    adults:adults,
+    children:children,
+    menus:menus
+  });
 }
 
 function sendData(data){
-/* Tu lahko dodaš kodo za pošiljanje podatkov na Google Sheet ali server */
-console.log('Podatki poslani:', data);
+  /* Tu lahko dodaš kodo za pošiljanje podatkov na Google Sheet ali server */
+  console.log('Podatki poslani:', data);
 }
 </script>
 
