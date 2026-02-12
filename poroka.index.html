@@ -18,7 +18,7 @@ input, select, textarea { width:100%; padding:8px; margin:5px 0 10px 0; border-r
 <body>
 <div class="card">
 
-<!-- STEP 1: Potrditev udeležbe -->
+<!-- STEP 1: Imena odraslih -->
 <div id="step1">
 <h1>Potrditev udeležbe</h1>
 <label>Ime in priimek odraslih gostov (ločeno z vejico)</label>
@@ -27,7 +27,7 @@ input, select, textarea { width:100%; padding:8px; margin:5px 0 10px 0; border-r
 <button onclick="attend(false)" style="background:#777;margin-top:10px">Ne pridem</button>
 </div>
 
-<!-- STEP 2: Koliko otrok pride -->
+<!-- STEP 2: Število otrok -->
 <div id="step2" class="hidden">
 <h2>Koliko otrok pride?</h2>
 <label>Število otrok</label>
@@ -36,7 +36,7 @@ input, select, textarea { width:100%; padding:8px; margin:5px 0 10px 0; border-r
 <button onclick="goToMenus()">Nadaljuj</button>
 </div>
 
-<!-- STEP 3: Izbira menijev -->
+<!-- STEP 3: Izbira menijev za odrasle -->
 <div id="step3" class="hidden">
 <h2>Izberi meni za odrasle</h2>
 <div id="menuOptions"></div>
@@ -56,15 +56,10 @@ let adultNames=[];
 function attend(value){
   attendance=value;
   const namesText = document.getElementById('guestNames').value.trim();
-  if(!namesText && value){
-    alert('Vpišite imena odraslih gostov'); 
-    return;
-  }
-  adultNames = namesText.split(',').map(n => n.trim()).filter(n=>n);
-  if(adultNames.length===0 && value){
-    alert('Vpišite vsaj eno ime odraslega gosta'); 
-    return;
-  }
+  if(value && !namesText){ alert('Vpišite imena odraslih gostov'); return; }
+  
+  adultNames = namesText.split(',').map(n => n.trim()).filter(n => n);
+  if(value && adultNames.length===0){ alert('Vpišite vsaj eno ime odraslega gosta'); return; }
 
   if(value){
     document.getElementById('step1').classList.add('hidden');
@@ -79,11 +74,11 @@ function attend(value){
 
 function goToMenus(){
   let children = parseInt(document.getElementById('children').value);
-  if(children<0){ alert('Vnesi 0 ali več'); return; }
+  if(children < 0){ alert('Vnesi 0 ali več'); return; }
 
-  // Prikaži meni za vsakega odraslega
   const container = document.getElementById('menuOptions');
   container.innerHTML = '';
+
   adultNames.forEach((name, i)=>{
     const select = document.createElement('select');
     select.className='menu-select';
@@ -112,13 +107,13 @@ function goToMenus(){
 
 function submitForm(){
   let menus=[];
-  adultNames.forEach((name,i)=>{
+  for(let i=0;i<adultNames.length;i++){
     const val = document.getElementById('adultMenu'+i).value;
     if(!val){ alert('Izberi meni za vsakega odraslega'); return; }
     menus.push(val);
-  });
+  }
 
-  let children=parseInt(document.getElementById('children').value);
+  let children = parseInt(document.getElementById('children').value);
 
   document.getElementById('step3').classList.add('hidden');
   document.getElementById('step4').classList.remove('hidden');
@@ -133,7 +128,7 @@ function submitForm(){
 }
 
 function sendData(data){
-  // Tu lahko dodaš kodo za pošiljanje na Google Sheets ali server
+  // Tu lahko dodaš kodo za pošiljanje podatkov na Google Sheets ali server
   console.log('Podatki poslani:', data);
 }
 </script>
