@@ -3,168 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RSVP Poroka</title>
+<title>RSVP Poroka Jana & Sašo</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f8f6f2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-}
-.card {
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 500px;
-}
-h1, h2 { text-align: center; }
-button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 10px;
-    background: black;
-    color: white;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 15px;
-}
-.option {
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 5px 0;
-    cursor: pointer;
-}
-.selected { border: 2px solid black; }
-input {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0 10px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
+body { font-family: Arial,sans-serif; background:#f8f6f2; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+.card { background:white; padding:30px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.1); width:100%; max-width:500px; }
+h1,h2 { text-align:center; }
+button { padding:10px 15px; border:none; border-radius:10px; background:black; color:white; cursor:pointer; width:100%; margin-top:15px; }
+input, select, textarea { width:100%; padding:8px; margin:5px 0 10px 0; border-radius:8px; border:1px solid #ccc; }
 .hidden { display:none; }
+.menu-select { margin-bottom:10px; }
+.note { font-style: italic; color: #555; margin-bottom: 15px; }
 </style>
 </head>
 <body>
 <div class="card">
 
+<!-- STEP 1: Imena odraslih -->
 <div id="step1">
 <h1>Potrditev udeležbe</h1>
-<label>Ime in priimek</label>
-<input type="text" id="name">
+<label>Ime in priimek odraslih gostov (ločeno z vejico)</label>
+<textarea id="guestNames" placeholder="Janez Novak, Ana Horvat"></textarea>
 <button onclick="attend(true)">Se udeležim</button>
 <button onclick="attend(false)" style="background:#777;margin-top:10px">Ne pridem</button>
 </div>
 
+<!-- STEP 2: Število otrok -->
 <div id="step2" class="hidden">
-<h2>Koliko oseb pride?</h2>
-<label>Odrasli</label>
-<input type="number" id="adults" min="1" value="1">
-<label>Otroci</label>
+<h2>Koliko otrok pride?</h2>
+<label>Število otrok</label>
 <input type="number" id="children" min="0" value="0">
+<p class="note">Otroci bodo imeli svoj meni.</p>
 <button onclick="goToMenus()">Nadaljuj</button>
 </div>
 
+<!-- STEP 3: Izbira menijev za odrasle -->
 <div id="step3" class="hidden">
-<h2>Izberi meni</h2>
-<p id="menuInfo"></p>
+<h2>Izberi meni za odrasle</h2>
 <div id="menuOptions"></div>
 <button onclick="submitForm()">Potrdi</button>
 </div>
 
+<!-- STEP 4: Hvala -->
 <div id="step4" class="hidden">
 <h2>Hvala za odgovor ❤️</h2>
 <p id="finalMessage"></p>
 </div>
 
-</div>
-
 <script>
-let attendance = false;
-let selectedMenus = [];
+let attendance=false;
+let adultNames=[];
 
 function attend(value){
-    attendance = value;
-    if(!document.getElementById('name').value){
-        alert('Vpišite ime');
-        return;
-    }
-    if(value){
-        document.getElementById('step1').classList.add('hidden');
-        document.getElementById('step2').classList.remove('hidden');
-    } else {
-        document.getElementById('step1').classList.add('hidden');
-        document.getElementById('step4').classList.remove('hidden');
-        document.getElementById('finalMessage').innerText='Žal nama je, da vas ne bo.';
-        sendData();
-    }
+  attendance=value;
+  const namesText = document.getElementById('guestNames').value.trim();
+  if(value && !namesText){ alert('Vpišite imena odraslih gostov'); return; }
+  
+  adultNames = namesText.split(',').map(n => n.trim()).filter(n => n);
+  if(value && adultNames.length===0){ alert('Vpišite vsaj eno ime odraslega gosta'); return; }
+
+  if(value){
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+  } else {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step4').classList.remove('hidden');
+    document.getElementById('finalMessage').innerText='Žal nama je, da vas ne bo.';
+  }
 }
 
 function goToMenus(){
-    let adults = parseInt(document.getElementById('adults').value);
-    if(adults < 1){
-        alert('Vsaj 1 odrasla oseba');
-        return;
-    }
-    document.getElementById('menuInfo').innerText='Izberite '+adults+' meni(jev)';
-    let container = document.getElementById('menuOptions');
-    container.innerHTML='';
-    ['Mesni','Ribji','Vegetarijanski'].forEach(menu=>{
-        let div = document.createElement('div');
-        div.className='option';
-        div.innerText = menu;
-        div.onclick = function(){ toggleMenu(div, menu, adults) };
-        container.appendChild(div);
-    });
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('step3').classList.remove('hidden');
-}
+  let children = parseInt(document.getElementById('children').value);
+  if(children < 0){ alert('Vnesi 0 ali več'); return; }
 
-function toggleMenu(element, menu, limit){
-    if(selectedMenus.includes(menu)){
-        selectedMenus = selectedMenus.filter(m => m !== menu);
-        element.classList.remove('selected');
-    } else {
-        if(selectedMenus.length >= limit){
-            alert('Lahko izberete samo '+limit+' menijev');
-            return;
-        }
-        selectedMenus.push(menu);
-        element.classList.add('selected');
-    }
+  const container = document.getElementById('menuOptions');
+  container.innerHTML = '';
+
+  adultNames.forEach((name, i)=>{
+    const div = document.createElement('div');
+    div.className = 'menu-select-wrapper';
+    
+    const label = document.createElement('label');
+    label.innerText = 'Meni za ' + name;
+    div.appendChild(label);
+
+    const select = document.createElement('select');
+    select.className='menu-select';
+    select.id='adultMenu'+i;
+
+    const optionDefault = document.createElement('option');
+    optionDefault.value='';
+    optionDefault.innerText='Izberi meni';
+    optionDefault.disabled = true;
+    optionDefault.selected = true;
+    select.appendChild(optionDefault);
+
+    ['Mesni','Ribji','Vegetarijanski'].forEach(menu=>{
+      const opt = document.createElement('option');
+      opt.value=menu;
+      opt.innerText=menu;
+      select.appendChild(opt);
+    });
+
+    div.appendChild(select);
+    container.appendChild(div);
+  });
+
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
 }
 
 function submitForm(){
-    let adults = document.getElementById('adults').value;
-    if(selectedMenus.length != adults){
-        alert('Izberite ustrezno število menijev');
-        return;
-    }
-    document.getElementById('step3').classList.add('hidden');
-    document.getElementById('step4').classList.remove('hidden');
-    document.getElementById('finalMessage').innerText='Veseliva se vaše udeležbe.';
-    sendData();
-}
+  let menus=[];
+  for(let i=0;i<adultNames.length;i++){
+    const val = document.getElementById('adultMenu'+i).value;
+    if(!val){ alert('Izberi meni za vsakega odraslega'); return; }
+    menus.push(val);
+  }
 
-function sendData(){
-    fetch("TUKAJ_PRILEPI_SVOJ_GOOGLE_SCRIPT_LINK", {
-        method: "POST",
-        mode: "no-cors",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            name: document.getElementById('name').value,
-            attendance: attendance,
-            adults: document.getElementById('adults')?.value || 0,
-            children: document.getElementById('children')?.value || 0,
-            menus: selectedMenus
-        })
-    });
+  let children = parseInt(document.getElementById('children').value);
+
+  // pripravi vsebino e-maila
+  const subject = "RSVP Poroka Jana & Sašo";
+  const body = `Odrasli: ${adultNames.join(', ')}
+Otroci: ${children}
+Meni: ${menus.join(', ')}`;
+
+  // odpri predizpolnjen e-mail
+  window.location.href = `mailto:jana.zec@outlook.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step4').classList.remove('hidden');
+  document.getElementById('finalMessage').innerText='Veseliva se vaše udeležbe. Hvala za odgovor!';
 }
 </script>
 
